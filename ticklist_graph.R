@@ -1,12 +1,21 @@
 
-library(ggplot2)
+require(ggplot2)
+
 d = read.csv("ticks.csv")
+
+# clean up data NA's and delete irrelevant rows
 d = d[-which(!(d$Style %in% c("Lead", "TR", "Follow"))),]
 d$Lead.Style[which(is.na(d$Lead.Style))] == "Redpoint" 
 d = d[-which(!(d$Route.Type %in% c("Sport", "Trad"))),]
 
+# change to character in order to do some cleaning of things like '5.7 R'
 s =as.character(d$Rating)
+# useful for cleaning and also for ordering factors later
 low_grade_strings = c("5.1", "5.2", "5.3", "5.4","5.5","5.6","5.7","5.8","5.9")
+
+# optional here; uncomment to remove rows which have low grades if you 
+# don't want your plot to go all the way down to 5.1
+
 #d = d[-which(s %in% low_grades), ] 
 #s = s[-which(s %in% low_grades)] 
 #grade_levels = levels(d$Rating)
@@ -15,7 +24,6 @@ low_grade_strings = c("5.1", "5.2", "5.3", "5.4","5.5","5.6","5.7","5.8","5.9")
 #d$Rating = factor(d$Rating, levels=grade_levels)
 #d = d[-which(d$Lead.Style=="Fell/Hung"),]
 #s = gsub(x=s, pattern="5.9", replacement="5.09")
-
 #s[low_grades] = gsub(x=s[low_grades], pattern=" .+$", replacement="")
 
 tmp = gsub(x=s, pattern=" .+$", replacement="")
@@ -24,8 +32,10 @@ tmp = gsub(x=tmp, pattern="-", replacement="")
 low_grades = as.logical(apply(sapply(tmp, grepl, low_grade_strings), 2, max))
 
 s = gsub(x=s, pattern=" .+$", replacement="")
-print(s[low_grades])
-print(s[-low_grades])
+
+# some debug printing to make sure all the text cleanup is handled
+#print(s[low_grades])
+#print(s[-low_grades])
 
 
 #s = gsub(x=s, pattern=" .+$", replacement="")
@@ -45,9 +55,6 @@ s = gsub(x=s, pattern="5.12$", replacement="5.12b")
 #s = gsub(x=s, pattern="b", replacement=2)
 #s = gsub(x=s, pattern="c", replacement=3)
 #s = gsub(x=s, pattern="d", replacement=4)
-
-
-print(s)
 
 d$Rating = factor(s, levels=c(
     "5.1",
@@ -71,10 +78,15 @@ d$Rating = factor(s, levels=c(
     "5.11d",
     "5.12a",
     "5.12b"))
+
 dt = as.Date(d$Date)
 d$Date = dt
+
+# set level orders
 d$Style = factor(d$Style, levels=c("Lead", "Follow", "TR"))
 d$Lead.Style = factor(d$Lead.Style, levels=c("Fell/Hung", "Redpoint", "Flash", "Onsight")) 
+
+# generate the plot
 p = (
     ggplot(d, aes(x=Date, y=Rating, col=Rating, shape=Style, alpha=Lead.Style)) + 
     geom_point(size=7, position="jitter") + 
@@ -86,3 +98,4 @@ p = (
     guides(col=F)
 )
 
+print("enter 'p' to view plot object")
